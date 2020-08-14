@@ -5,26 +5,20 @@
 #include <sys/mman.h>
 #include <sys/stat.h>	// For mode constants
 #include <fcntl.h>	// For O_* constants
-#include <atomic>
 #include <errno.h>
 
 MainWindow::MainWindow(QWidget * parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+	QMainWindow(parent),
+	ui(new Ui::MainWindow)
 {
-    printf("asdfasdf\n");
+	const int shm_fd = shm_open("gaomon-s620-driver::packet", O_RDWR, 0444);
+	ftruncate(shm_fd, sizeof(Packet));
 
-    const int shm_fd = shm_open("gaomon-s620-driver::packet", O_RDWR, 0666);
-    printf("%d\n", shm_fd);
-    printf("%d\n", errno);
-	ftruncate(shm_fd, sizeof(std::atomic<Packet>));
 
-	shared_packet_data = (std::atomic<Packet> *)
-		mmap(0, sizeof(std::atomic<Packet>), PROT_READ, MAP_SHARED, shm_fd, 0);
+	shared_packet_data = (Packet *)
+		mmap(0, sizeof(Packet), PROT_READ, MAP_SHARED, shm_fd, 0);
 
-    printf("%p\n", shared_packet_data);
-
-    ui->setupUi(this);
+	ui->setupUi(this);
 
 	timerId = startTimer(5);
 	ui->image_label->show();
@@ -36,12 +30,9 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::timerEvent(QTimerEvent * event) {
+	ui->x_value->setNum(shared_packet_data->xcord);
+	ui->y_value->setNum(shared_packet_data->ycord);
 
-    /*Packet packet = shared_packet_data->load();
-
-	ui->x_value->setNum(packet.xcord);
-	ui->y_value->setNum(packet.ycord);
-
-	ui->pressure_bar->setValue(packet.pressure);
-    ui->pressure_value->setNum(packet.pressure);*/
+	ui->pressure_bar->setValue(shared_packet_data->pressure);
+	ui->pressure_value->setNum(shared_packet_data->pressure);
 }

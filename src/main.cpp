@@ -6,7 +6,6 @@
 #include <fcntl.h>           // For O_* constants
 #include <libusb-1.0/libusb.h>
 #include <errno.h>
-#include <atomic>
 
 #include "gaomon-s620.hpp"
 
@@ -24,13 +23,13 @@ int main() {
 
 	if (shm_fd == -1) {
 		shm_unlink(SHARED_MEMORY_NAME);
-		shm_fd = shm_open(SHARED_MEMORY_NAME, O_CREAT | O_RDWR, 0666);
+		shm_fd = shm_open(SHARED_MEMORY_NAME, O_CREAT | O_EXCL | O_RDWR, 0666);
 	}
 
 	ftruncate(shm_fd, sizeof(GAOMON_S620::Packet::Packet));
 
-	auto shared_packet_data =(std::atomic<GAOMON_S620::Packet::Packet> *) mmap(
-			0, sizeof(std::atomic<GAOMON_S620::Packet::Packet>),
+	auto shared_packet_data = (GAOMON_S620::Packet::Packet *) mmap(
+			0, sizeof(GAOMON_S620::Packet::Packet),
 			PROT_WRITE, MAP_SHARED,
 			shm_fd, 0
 		);
@@ -48,7 +47,7 @@ int main() {
 			break;
 		}
 
-		shared_packet_data->store(*packet);
+		*shared_packet_data = *packet;
 
 		if (packet->isPencilUpdate()) {
 
@@ -67,7 +66,8 @@ int main() {
 	}
 
 	GAOMON_S620::stop();
+	shm_unlink(SHARED_MEMORY_NAME);
 	delete[] packet;
-	
+
 	return 0;
 }

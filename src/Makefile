@@ -4,7 +4,7 @@ HEADER	= gaomon-s620.hpp
 OUT	= driver
 CC	= g++
 FLAGS	= -g -c -Wall
-LFLAGS	= -lusb-1.0 -lrt -latomic
+LFLAGS	= -lusb-1.0 -lrt
 
 all: $(OBJS)
 	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)

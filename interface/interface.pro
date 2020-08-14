@@ -45,4 +45,4 @@ RESOURCES += \
     images.qrc
 
 
-LIBS += -pthread -lrt -latomic
+LIBS += -pthread -lrt
