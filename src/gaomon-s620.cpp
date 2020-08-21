@@ -9,16 +9,10 @@
 
 #include "gaomon-s620.hpp"
 
-
-#define BULK_EP_OUT 	0x81
-#define BULK_EP_IN  	0x01 // ?
-
-#define _err(code) {	\
-	int r = code; 	\
-	if (r < 0) 	\
-		printf("Error on <" #code ">, exit code = %d", r); \
+#define DUMP_HEX(var) {	\
+	for (int __dump_hex_i = 0; __dump_hex_i < sizeof(var); __dump_hex_i++) 	\
+		printf("%02hhx", ((char *) &var)[__dump_hex_i]);		\
 }
-
 
 libusb_context * GAOMON_S620::DeviceInterface::ctx = nullptr;
 struct libusb_device_handle * GAOMON_S620::DeviceInterface::dev_handle = nullptr;
@@ -71,7 +65,7 @@ int GAOMON_S620::DeviceInterface::read(uint8_t * output) {
 };
 
 int GAOMON_S620::DeviceInterface::stop() {
-	int r = libusb_release_interface(dev_handle, 0);
+	const int r = libusb_release_interface(dev_handle, 0);
 
 	if(r != 0) {
 		printf("Cannot release the interface.\n");
@@ -168,12 +162,9 @@ int GAOMON_S620::UInput::init() {
 	// Set x axis info
 	{
 		memset(&abs_setup, 0, sizeof(abs_setup));
+
 		abs_setup.code = ABS_X;
-		abs_setup.absinfo.value = 0;
-		abs_setup.absinfo.minimum = 0;
 		abs_setup.absinfo.maximum = Resolution::WIDTH;
-		abs_setup.absinfo.fuzz = 0;
-		abs_setup.absinfo.flat = 0;
 		abs_setup.absinfo.resolution = 400;
 
 		ioctl(fileDescriptor, UI_ABS_SETUP, &abs_setup);
@@ -182,12 +173,9 @@ int GAOMON_S620::UInput::init() {
 	// Set y axis info
 	{
 		memset(&abs_setup, 0, sizeof(abs_setup));
+
 		abs_setup.code = ABS_Y;
-		abs_setup.absinfo.value = 0;
-		abs_setup.absinfo.minimum = 0;
 		abs_setup.absinfo.maximum = Resolution::HEIGHT;
-		abs_setup.absinfo.fuzz = 0;
-		abs_setup.absinfo.flat = 0;
 		abs_setup.absinfo.resolution = 400;
 
 		ioctl(fileDescriptor, UI_ABS_SETUP, &abs_setup);
@@ -196,13 +184,9 @@ int GAOMON_S620::UInput::init() {
 	// Set pressure axis info
 	{
 		memset(&abs_setup, 0, sizeof(abs_setup));
+
 		abs_setup.code = ABS_PRESSURE;
-		abs_setup.absinfo.value = 0;
-		abs_setup.absinfo.minimum = 0;
 		abs_setup.absinfo.maximum = Resolution::MAX_PRESSURE;
-		abs_setup.absinfo.fuzz = 0;
-		abs_setup.absinfo.flat = 0;
-		abs_setup.absinfo.resolution = 0;
 
 		ioctl(fileDescriptor, UI_ABS_SETUP, &abs_setup);
 	}
@@ -211,15 +195,16 @@ int GAOMON_S620::UInput::init() {
 	{
 		memset(&setup, 0, sizeof(setup));
 		snprintf(setup.name, UINPUT_MAX_NAME_SIZE, DEVICE_NAME);
-		setup.id.bustype = BUS_VIRTUAL;
-		setup.id.vendor  = 1;
-		setup.id.product = 1;
-		setup.id.version = 2;
-		setup.ff_effects_max = 0;
+
+		setup.id = {
+			.bustype = BUS_VIRTUAL,
+			.vendor  = VENDOR_ID,
+			.product = PRODUCT_ID,
+			.version = 2
+		};
 
 		ioctl(fileDescriptor, UI_DEV_SETUP, &setup);
 	}
-
 
 	// Create device
 	ioctl(fileDescriptor, UI_DEV_CREATE);
@@ -278,11 +263,10 @@ void GAOMON_S620::UInput::setPencilMode(const uint8_t mode) {
 };
 
 void GAOMON_S620::UInput::sync() {
-	struct input_event event;
+	struct input_event event = {
+		.type = EV_SYN
+	};
 
-	memset(&event, 0, sizeof(struct input_event));
-
-	event.type = EV_SYN;
 	write(fileDescriptor, &event, sizeof(struct input_event));
 };
 
