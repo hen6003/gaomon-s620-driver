@@ -229,8 +229,8 @@ void GAOMON_S620::UInput::sendEvent(uint16_t type, uint16_t code, uint32_t value
 }
 
 void GAOMON_S620::UInput::moveTo(const uint16_t x, const uint16_t y) {
-	sendEvent(EV_ABS, ABS_X, x);
-	sendEvent(EV_ABS, ABS_Y, y);
+	sendEvent(EV_ABS, ABS_X, x*scaler);
+	sendEvent(EV_ABS, ABS_Y, y*scaler);
 };
 
 void GAOMON_S620::UInput::setPressure(const uint16_t pressure) {

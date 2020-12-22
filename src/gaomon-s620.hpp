@@ -14,6 +14,7 @@
 #define VENDOR_ID	0x256c
 #define PRODUCT_ID 	0x006d
 
+#define scaler      4
 
 namespace GAOMON_S620 {
 

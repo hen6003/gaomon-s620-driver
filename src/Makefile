@@ -2,7 +2,7 @@ OBJS	= main.o gaomon-s620.o
 SOURCE	= main.cpp gaomon-s620.cpp
 HEADER	= gaomon-s620.hpp
 OUT	= driver
-CC	= g++
+CC	= clang++
 FLAGS	= -g -c -Wall
 LFLAGS	= -lusb-1.0 -lrt
 
